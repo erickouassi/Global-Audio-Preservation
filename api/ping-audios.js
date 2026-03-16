@@ -1,11 +1,23 @@
-import { Redis } from "@upstash/redis";
+const redisUrl = process.env.KV_REST_API_URL;
+const redisToken = process.env.KV_REST_API_TOKEN;
+
+async function redisGet(key) {
+  const res = await fetch(`${redisUrl}/get/${key}`, {
+    headers: { Authorization: `Bearer ${redisToken}` }
+  });
+  const data = await res.json();
+  return data.result;
+}
+
+async function redisSet(key, value) {
+  await fetch(`${redisUrl}/set/${key}/${encodeURIComponent(value)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${redisToken}` }
+  });
+}
+
 import fs from "fs";
 import path from "path";
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN
-});
 
 export default async function handler(req, res) {
   const filePath = path.join(process.cwd(), "audio.json");
@@ -21,24 +33,22 @@ export default async function handler(req, res) {
     const pingKey = `audio_nextPing_${id}`;
     const lastPlayedKey = `audio_lastPlayed_${id}`;
 
-    const nextPing = await redis.get(pingKey);
+    const nextPing = await redisGet(pingKey);
 
-    // Skip if nextPing is still in the future
     if (nextPing && today < nextPing) {
       results.push({ id, action: "skipped", nextPing });
       continue;
     }
 
     try {
-      // HEAD request to keep audio alive
       await fetch(audio.mp3, { method: "HEAD" });
 
       const now = new Date();
       const next = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
       const newNextPing = next.toISOString().split("T")[0];
 
-      await redis.set(pingKey, newNextPing);
-      await redis.set(lastPlayedKey, today);
+      await redisSet(pingKey, newNextPing);
+      await redisSet(lastPlayedKey, today);
 
       results.push({ id, action: "pinged", newNextPing });
     } catch (err) {

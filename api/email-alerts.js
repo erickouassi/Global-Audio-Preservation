@@ -1,11 +1,16 @@
-import { Redis } from "@upstash/redis";
+const redisUrl = process.env.KV_REST_API_URL;
+const redisToken = process.env.KV_REST_API_TOKEN;
+
+async function redisGet(key) {
+  const res = await fetch(`${redisUrl}/get/${key}`, {
+    headers: { Authorization: `Bearer ${redisToken}` }
+  });
+  const data = await res.json();
+  return data.result;
+}
+
 import fs from "fs";
 import path from "path";
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN
-});
 
 export default async function handler(req, res) {
   const filePath = path.join(process.cwd(), "audio.json");
@@ -24,8 +29,8 @@ export default async function handler(req, res) {
     const pingKey = `audio_nextPing_${id}`;
     const lastPlayedKey = `audio_lastPlayed_${id}`;
 
-    const nextPing = await redis.get(pingKey);
-    const lastPlayed = await redis.get(lastPlayedKey);
+    const nextPing = await redisGet(pingKey);
+    const lastPlayed = await redisGet(lastPlayedKey);
 
     if (!nextPing) {
       critical.push({ audio, reason: "Missing nextPing" });
