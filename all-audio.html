@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PingHost – All Audio Files</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 14px;
+      background: #444;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background: #eaeaea;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      display: inline-block;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+
+    footer a {
+      color: #0078ff;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      td:nth-child(2), th:nth-child(2),
+      td:nth-child(3), th:nth-child(3),
+      td:nth-child(5), th:nth-child(5) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Back to your main project page -->
+  <a href="index.html" class="home-link">← Back to Home</a>
+
+  <h1>All Audio Files</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Note</th>
+        <th>MP3</th>
+        <th>Last Ping</th>
+        <th>Days</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="audioTableBody"></tbody>
+  </table>
+
+  <footer>
+    <p>
+      <a href="about.html">About</a> |
+      <a href="privacy.html">Privacy</a> |
+      <a href="#" id="shareLink">Tell A Friend →</a>
+    </p>
+    <p>© <span id="year"></span> | Made with 🙏🏽 by 
+      <a href="https://erickouassi.com/" target="_blank">Eric</a>
+    </p>
+  </footer>
+
+  <!-- Load your unified project logic -->
+  <script src="script.js"></script>
+
+  <script>
+    function urgencyColor(urgency) {
+      return {
+        "healthy": "#4caf50",
+        "warning": "#ff9800",
+        "critical": "#f44336"
+      }[urgency];
+    }
+
+    function renderTable(audios, states) {
+      const tbody = document.getElementById("audioTableBody");
+      tbody.innerHTML = "";
+
+      const today = new Date();
+
+      audios.forEach(audio => {
+        const state = states[audio.id] || {};
+        const last = state.lastPlayed ? new Date(state.lastPlayed) : null;
+
+        const diff = last
+          ? Math.floor((today - last) / (1000 * 60 * 60 * 24))
+          : "Never";
+
+        const urgency = getStatus(state.nextPing);
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${audio.title}</td>
+          <td style="color:#666;">${audio.note || ""}</td>
+          <td style="color:#0078ff; word-break:break-all;">${audio.mp3}</td>
+          <td>${state.lastPlayed || "Never"}</td>
+          <td>${diff}</td>
+          <td>
+            <span class="status-badge" style="background:${urgencyColor(urgency)};">
+              ${urgency.toUpperCase()}
+            </span>
+          </td>
+          <td>
+            <button class="btn" style="padding:6px 10px;">Ping Now</button>
+          </td>
+        `;
+
+        row.querySelector("button").onclick = async () => {
+          await registerPlay(audio.id);
+          location.reload();
+        };
+
+        tbody.appendChild(row);
+      });
+    }
+
+    async function init() {
+      const audios = await fetchJson("audio.json");
+
+      const states = {};
+      for (const audio of audios) {
+        states[audio.id] = await getState(audio.id);
+      }
+
+      renderTable(audios, states);
+      document.getElementById("year").textContent = new Date().getFullYear();
+    }
+
+    init();
+  </script>
+
+</body>
+</html>
