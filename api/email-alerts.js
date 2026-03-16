@@ -1,8 +1,13 @@
-const { kv } = require("@vercel/kv");
-const fs = require("fs");
-const path = require("path");
+import { Redis } from "@upstash/redis";
+import fs from "fs";
+import path from "path";
 
-module.exports = async function handler(req, res) {
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN
+});
+
+export default async function handler(req, res) {
   const filePath = path.join(process.cwd(), "audio.json");
   const file = fs.readFileSync(filePath, "utf8");
   const audios = JSON.parse(file);
@@ -12,15 +17,15 @@ module.exports = async function handler(req, res) {
 
   const warnings = [];
   const critical = [];
-  const errors = [];
 
   for (const audio of audios) {
     const id = audio.id;
+
     const pingKey = `audio_nextPing_${id}`;
     const lastPlayedKey = `audio_lastPlayed_${id}`;
 
-    const nextPing = await kv.get(pingKey);
-    const lastPlayed = await kv.get(lastPlayedKey);
+    const nextPing = await redis.get(pingKey);
+    const lastPlayed = await redis.get(lastPlayedKey);
 
     if (!nextPing) {
       critical.push({ audio, reason: "Missing nextPing" });
@@ -38,12 +43,10 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // If nothing to report, exit quietly
-  if (warnings.length === 0 && critical.length === 0 && errors.length === 0) {
+  if (warnings.length === 0 && critical.length === 0) {
     return res.status(200).json({ message: "No alerts needed today." });
   }
 
-  // Build email body
   let body = `Audio Preservation Alerts (${todayStr})\n\n`;
 
   if (critical.length > 0) {
@@ -62,7 +65,6 @@ module.exports = async function handler(req, res) {
     body += "\n";
   }
 
-  // Send email via Resend
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -78,4 +80,4 @@ module.exports = async function handler(req, res) {
   });
 
   res.status(200).json({ message: "Alert email sent.", body });
-};
+}
