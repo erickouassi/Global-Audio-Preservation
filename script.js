@@ -167,6 +167,42 @@ async function loadUI() {
     dashboardEl.innerHTML = "<p>Failed to load dashboard.</p>";
   }
 }
+/* ------------------------------
+   Playlist Rendering
+------------------------------ */
+
+async function loadPlaylist() {
+  const playlistEl = document.getElementById("playlist");
+  if (!playlistEl) return;
+
+  const audios = await fetchJson("audio.json");
+
+  playlistEl.innerHTML = "";
+
+  audios.forEach(audio => {
+    const card = document.createElement("section");
+    card.className = "episode-card";
+
+    card.innerHTML = `
+      <h3>${audio.title}</h3>
+      <p>${audio.note || ""}</p>
+      <audio controls src="${audio.mp3}" data-id="${audio.id}"></audio>
+    `;
+
+    const player = card.querySelector("audio");
+
+    player.addEventListener("timeupdate", async () => {
+      if (player.currentTime > 1 && !player._counted) {
+        player._counted = true;
+        await registerPlay(audio.id);
+      }
+    });
+
+    playlistEl.appendChild(card);
+  });
+}
+
+
 
 /* ------------------------------
    Global init
@@ -191,5 +227,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   loadRandomEpisode();
+  loadPlaylist();
   loadUI();
 });
