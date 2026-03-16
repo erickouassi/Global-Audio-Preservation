@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/ping-audios.js": {
+      "schedule": "0 6 * * *"
+    },
+    "api/email-alerts.js": {
+      "schedule": "0 7 * * *"
+    }
+  }
+}
