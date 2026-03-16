@@ -61,6 +61,16 @@
       display: inline-block;
     }
 
+    .reset-btn {
+      padding: 6px 10px;
+      background: #c62828;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-left: 6px;
+      cursor: pointer;
+    }
+
     footer {
       margin-top: 40px;
       padding-top: 20px;
@@ -86,7 +96,6 @@
 </head>
 <body>
 
-  <!-- Back to your main project page -->
   <a href="index.html" class="home-link">← Back to Home</a>
 
   <h1>All Audio Files</h1>
@@ -117,62 +126,58 @@
     </p>
   </footer>
 
-  <!-- Load your unified project logic -->
   <script src="script.js"></script>
 
- <script>
-  function urgencyColor(urgency) {
-    return {
-      "healthy": "#4caf50",
-      "warning": "#ff9800",
-      "critical": "#f44336"
-    }[urgency];
-  }
+  <script>
+    function urgencyColor(urgency) {
+      return {
+        "healthy": "#4caf50",
+        "warning": "#ff9800",
+        "critical": "#f44336"
+      }[urgency];
+    }
 
-  function renderTable(audios, states) {
-    const tbody = document.getElementById("audioTableBody");
-    tbody.innerHTML = "";
+    function renderTable(audios, states) {
+      const tbody = document.getElementById("audioTableBody");
+      tbody.innerHTML = "";
 
-    const today = new Date();
+      const today = new Date();
 
-    audios.forEach(audio => {
-      const state = states[audio.id] || {};
-      const last = state.lastPlayed ? new Date(state.lastPlayed) : null;
+      audios.forEach(audio => {
+        const state = states[audio.id] || {};
+        const last = state.lastPlayed ? new Date(state.lastPlayed) : null;
 
-      const diff = last
-        ? Math.floor((today - last) / (1000 * 60 * 60 * 24))
-        : "Never";
+        const diff = last
+          ? Math.floor((today - last) / (1000 * 60 * 60 * 24))
+          : "Never";
 
-      const urgency = getStatus(state.nextPing);
+        const urgency = getStatus(state.nextPing);
 
-      const row = document.createElement("tr");
+        const row = document.createElement("tr");
 
-      row.innerHTML = `
-        <td>${audio.title}</td>
-        <td style="color:#666;">${audio.note || ""}</td>
-        <td style="color:#0078ff; word-break:break-all;">${audio.mp3}</td>
-        <td>${state.lastPlayed || "Never"}</td>
-        <td>${diff}</td>
-        <td>
-          <span class="status-badge" style="background:${urgencyColor(urgency)};">
-            ${urgency.toUpperCase()}
-          </span>
-        </td>
-        <td>
-          <button class="btn" style="padding:6px 10px;">Ping Now</button>
-        </td>
-      `;
+        row.innerHTML = `
+          <td>${audio.title}</td>
+          <td style="color:#666;">${audio.note || ""}</td>
+          <td style="color:#0078ff; word-break:break-all;">${audio.mp3}</td>
+          <td>${state.lastPlayed || "Never"}</td>
+          <td>${diff}</td>
+          <td>
+            <span class="status-badge" style="background:${urgencyColor(urgency)};">
+              ${urgency.toUpperCase()}
+            </span>
+          </td>
+          <td>
+            <button class="btn ping-btn" style="padding:6px 10px;">Ping Now</button>
+            <button class="reset-btn">Reset</button>
+          </td>
+        `;
 
-      /* NEW: Reliable ping logic */
-      row.querySelector("button").onclick = async () => {
-        try {
-          await registerPlay(audio.id);   // same backend as random player
+        row.querySelector(".ping-btn").onclick = async () => {
+          await registerPlay(audio.id);
           const newState = await getState(audio.id);
 
-          // Update row instantly
           row.cells[3].textContent = newState.lastPlayed || "Never";
 
-          const today = new Date();
           const last = newState.lastPlayed ? new Date(newState.lastPlayed) : null;
           const diff = last
             ? Math.floor((today - last) / (1000 * 60 * 60 * 24))
@@ -184,31 +189,42 @@
           const badge = row.cells[5].querySelector(".status-badge");
           badge.textContent = urgency.toUpperCase();
           badge.style.background = urgencyColor(urgency);
+        };
 
-        } catch (e) {
-          console.error("Ping failed:", e);
-        }
-      };
+        row.querySelector(".reset-btn").onclick = async () => {
+          const confirmReset = confirm(`Reset play count for "${audio.title}"?`);
+          if (!confirmReset) return;
 
-      tbody.appendChild(row);
-    });
-  }
+          await resetCount(audio.id);
+          const newState = await getState(audio.id);
 
-  async function init() {
-    const audios = await fetchJson("audio.json");
+          row.cells[3].textContent = newState.lastPlayed || "Never";
+          row.cells[4].textContent = "0";
 
-    const states = {};
-    for (const audio of audios) {
-      states[audio.id] = await getState(audio.id);
+          const urgency = getStatus(newState.nextPing);
+          const badge = row.cells[5].querySelector(".status-badge");
+          badge.textContent = urgency.toUpperCase();
+          badge.style.background = urgencyColor(urgency);
+        };
+
+        tbody.appendChild(row);
+      });
     }
 
-    renderTable(audios, states);
-    document.getElementById("year").textContent = new Date().getFullYear();
-  }
+    async function init() {
+      const audios = await fetchJson("audio.json");
 
-  init();
-</script>
+      const states = {};
+      for (const audio of audios) {
+        states[audio.id] = await getState(audio.id);
+      }
 
+      renderTable(audios, states);
+      document.getElementById("year").textContent = new Date().getFullYear();
+    }
+
+    init();
+  </script>
 
 </body>
 </html>
