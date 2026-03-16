@@ -1,5 +1,9 @@
 const dashboardEl = document.getElementById("dashboard");
 
+/* ------------------------------
+   Helpers
+------------------------------ */
+
 async function fetchJson(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch ${url}`);
@@ -34,6 +38,10 @@ function getStatus(nextPing) {
   return "critical";
 }
 
+/* ------------------------------
+   Random Episode Player
+------------------------------ */
+
 async function loadRandomEpisode() {
   try {
     const audios = await fetchJson("audio.json");
@@ -57,11 +65,16 @@ async function loadRandomEpisode() {
     `;
 
     const player = document.getElementById("randomAudio");
-    player.addEventListener("play", async () => {
-      try {
-        await registerPlay(random.id);
-      } catch (e) {
-        console.error(e);
+
+    /* NEW: Reliable play counting */
+    player.addEventListener("timeupdate", async () => {
+      if (player.currentTime > 1 && !player._counted) {
+        player._counted = true;
+        try {
+          await registerPlay(random.id);
+        } catch (e) {
+          console.error("Failed to register play:", e);
+        }
       }
     });
 
@@ -71,6 +84,10 @@ async function loadRandomEpisode() {
     container.innerHTML = "<p>Failed to load random episode.</p>";
   }
 }
+
+/* ------------------------------
+   Dashboard
+------------------------------ */
 
 async function loadUI() {
   try {
@@ -107,6 +124,10 @@ async function loadUI() {
     dashboardEl.innerHTML = "<p>Failed to load dashboard.</p>";
   }
 }
+
+/* ------------------------------
+   Init
+------------------------------ */
 
 loadRandomEpisode();
 loadUI();
