@@ -16,48 +16,44 @@ async function redisSet(key, value) {
   });
 }
 
+function addDays(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
 export default async function handler(req, res) {
   const id = req.query.id;
   if (!id) return res.status(400).json({ error: "Missing id" });
 
   const countKey = `audio_count_${id}`;
   const nextPingKey = `audio_nextPing_${id}`;
-  const lastPlayedDayKey = `audio_lastPlayedDay_${id}`;
-  const publishedKey = `audio_published_${id}`;
+  const lastPlayedKey = `audio_lastPlayed_${id}`;
+  const publishedKey = `audio_published_${id}`; // optional if you want to store it
 
   if (req.method === "GET") {
-    const count = parseInt(await redisGet(countKey) || "0", 10);
+    const count = parseInt((await redisGet(countKey)) || "0", 10);
     const nextPing = await redisGet(nextPingKey);
-    const lastPlayed = await redisGet(lastPlayedDayKey);
+    const lastPlayed = await redisGet(lastPlayedKey);
     return res.status(200).json({ count, nextPing, lastPlayed });
   }
 
   if (req.method === "POST") {
-    // 1. Increment play count
-    const currentCount = parseInt(await redisGet(countKey) || "0", 10);
+    // 1) Increment play count
+    const currentCount = parseInt((await redisGet(countKey)) || "0", 10);
     const newCount = currentCount + 1;
     await redisSet(countKey, newCount);
 
-    // 2. Determine today's date
+    // 2) Reset nextPing to today + 90 days (hard cap)
     const now = new Date();
-    const today = now.toISOString().split("T")[0];
+    const todayIso = now.toISOString();
+    const nextPing = addDays(now, 90).toISOString();
 
-    // 3. Check if we already bumped today
-    const lastPlayedDay = await redisGet(lastPlayedDayKey);
-
-    if (lastPlayedDay !== today) {
-      // First play of the day → bump nextPing by 1 day
-      const currentNextPing = new Date(await redisGet(nextPingKey));
-      const bumped = new Date(currentNextPing.getTime() + 24 * 60 * 60 * 1000);
-
-      await redisSet(nextPingKey, bumped.toISOString());
-      await redisSet(lastPlayedDayKey, today);
-    }
+    await redisSet(lastPlayedKey, todayIso);
+    await redisSet(nextPingKey, nextPing);
 
     return res.status(200).json({
       count: newCount,
-      nextPing: await redisGet(nextPingKey),
-      lastPlayed: today
+      nextPing,
+      lastPlayed: todayIso
     });
   }
 
