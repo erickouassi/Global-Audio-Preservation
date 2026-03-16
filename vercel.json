@@ -1,10 +1,10 @@
 {
   "functions": {
     "api/ping-audios.js": {
-      "schedule": "0 6 * * *"
+      "runtime": "nodejs18.x"
     },
     "api/email-alerts.js": {
-      "schedule": "0 7 * * *"
+      "runtime": "nodejs18.x"
     }
   }
 }
