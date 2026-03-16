@@ -1,4 +1,3 @@
-const audioListEl = document.getElementById("audioList");
 const dashboardEl = document.getElementById("dashboard");
 
 async function fetchJson(url) {
@@ -35,28 +34,51 @@ function getStatus(nextPing) {
   return "critical";
 }
 
+async function loadRandomEpisode() {
+  try {
+    const audios = await fetchJson("audio.json");
+
+    const random = audios[Math.floor(Math.random() * audios.length)];
+    const state = await getState(random.id);
+
+    const container = document.getElementById("randomPlayer");
+
+    container.innerHTML = `
+      <section class="audio-card random-card">
+        <h2>🎧 Random Episode</h2>
+        <h3>${random.title}</h3>
+        <p><strong>Published:</strong> ${random.published}</p>
+
+        <audio id="randomAudio" controls src="${random.mp3}" data-id="${random.id}"></audio>
+
+        <p><strong>Plays:</strong> ${state.count || 0}</p>
+        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"}</p>
+      </section>
+    `;
+
+    const player = document.getElementById("randomAudio");
+    player.addEventListener("play", async () => {
+      try {
+        await registerPlay(random.id);
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+  } catch (err) {
+    console.error("Random episode failed:", err);
+    const container = document.getElementById("randomPlayer");
+    container.innerHTML = "<p>Failed to load random episode.</p>";
+  }
+}
+
 async function loadUI() {
   try {
     const audios = await fetchJson("audio.json");
-    audioListEl.innerHTML = "";
     dashboardEl.innerHTML = "";
 
     for (const audio of audios) {
       const state = await getState(audio.id);
-
-      const playerCard = document.createElement("section");
-      playerCard.className = "audio-card";
-
-      playerCard.innerHTML = `
-        <h3>${audio.title}</h3>
-        <p><strong>Published:</strong> ${audio.published}</p>
-        <audio controls src="${audio.mp3}" data-id="${audio.id}"></audio>
-        <p><strong>Plays:</strong> ${state.count || 0}</p>
-        <p><strong>Next Ping:</strong> ${state.nextPing || "—"}</p>
-        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"}</p>
-      `;
-
-      audioListEl.appendChild(playerCard);
 
       const status = getStatus(state.nextPing);
       const daysLeft = state.nextPing
@@ -80,22 +102,11 @@ async function loadUI() {
       dashboardEl.appendChild(dashCard);
     }
 
-    document.querySelectorAll("audio").forEach(player => {
-      player.addEventListener("play", async () => {
-        const id = player.getAttribute("data-id");
-        try {
-          await registerPlay(id);
-          await loadUI();
-        } catch (e) {
-          console.error(e);
-        }
-      });
-    });
   } catch (err) {
     console.error(err);
-    audioListEl.innerHTML = "<p>Failed to load audio list.</p>";
     dashboardEl.innerHTML = "<p>Failed to load dashboard.</p>";
   }
 }
 
+loadRandomEpisode();
 loadUI();
