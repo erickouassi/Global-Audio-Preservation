@@ -38,6 +38,13 @@ function getStatus(nextPing) {
   return "critical";
 }
 
+async function resetCount(id) {
+  const res = await fetch(`/api/reset-count?id=${id}`, { method: "POST" });
+  if (!res.ok) throw new Error("Failed to reset count");
+  return res.json();
+}
+
+
 /* ------------------------------
    Random Episode Player
 ------------------------------ */
@@ -108,13 +115,18 @@ async function loadUI() {
 
       const dashCard = document.createElement("section");
       dashCard.className = "dash-card";
-      dashCard.innerHTML = `
-        <h3>${audio.title}</h3>
-        <p><strong>Plays:</strong> ${state.count || 0}</p>
-        <p><strong>Next Ping:</strong> ${state.nextPing || "—"} (${daysLeft} days left)</p>
-        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"} (${daysSince} days ago)</p>
-        <span class="status ${status}">${status.toUpperCase()}</span>
-      `;
+     dashCard.innerHTML = `
+  <h3>${audio.title}</h3>
+  <p><strong>Plays:</strong> ${state.count || 0}</p>
+  <p><strong>Next Ping:</strong> ${state.nextPing || "—"} (${daysLeft} days left)</p>
+  <p><strong>Last Played:</strong> ${state.lastPlayed || "—"} (${daysSince} days ago)</p>
+  <span class="status ${status}">${status.toUpperCase()}</span>
+
+  <button class="reset-btn" data-id="${audio.id}" style="margin-top:10px;background:#c62828;color:white;padding:6px 10px;border:none;border-radius:6px;">
+    Reset Count
+  </button>
+`;
+
 
       dashboardEl.appendChild(dashCard);
     }
