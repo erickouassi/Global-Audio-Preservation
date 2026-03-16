@@ -2,22 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Global Audio Preservation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PingHost – Audio Preservation</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .nav-links {
+      margin-bottom: 20px;
+    }
+
+    .nav-links a {
+      display: inline-block;
+      margin-right: 10px;
+      padding: 8px 14px;
+      background: #444;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .audio-card, .dash-card {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .random-card {
+      border-left: 4px solid #0078ff;
+      background: #eef6ff;
+    }
+
+    .status {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: white;
+    }
+
+    .healthy { background: #4caf50; }
+    .warning { background: #ff9800; }
+    .critical { background: #f44336; }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+
+    footer a {
+      color: #0078ff;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Global Audio Preservation</h1>
-    <p>Random play + preservation dashboard.</p>
 
-    <!-- Random Episode Player -->
-    <section id="randomPlayer"></section>
+  <h1>PingHost – Audio Preservation</h1>
 
-    <h2>Preservation Dashboard</h2>
-    <div id="dashboard"></div>
+  <div class="nav-links">
+    <a href="all-audio.html">All Audio Files</a>
+    <a href="about.html">About</a>
+    <a href="privacy.html">Privacy</a>
   </div>
 
+  <!-- Random Episode Player -->
+  <section id="randomPlayer"></section>
+
+  <h2>Preservation Dashboard</h2>
+  <div id="dashboard"></div>
+
+  <footer>
+    <p>
+      <a href="about.html">About</a> |
+      <a href="privacy.html">Privacy</a> |
+      <a href="#" id="shareLink">Tell A Friend →</a>
+    </p>
+    <p>© <span id="year"></span> | Made with 🙏🏽 by 
+      <a href="https://erickouassi.com/" target="_blank">Eric</a>
+    </p>
+  </footer>
+
   <script src="script.js"></script>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
 </body>
 </html>
