@@ -49,12 +49,6 @@ function getStatus(nextPing) {
   return "critical";
 }
 
-function isToday(dateStr) {
-  if (!dateStr) return false;
-  const today = new Date().toISOString().split("T")[0];
-  return dateStr.startsWith(today);
-}
-
 function createCountdownBar(daysLeft, totalWindow = 90) {
   if (typeof daysLeft !== "number" || isNaN(daysLeft)) return "";
   const clamped = Math.max(0, Math.min(totalWindow, daysLeft));
@@ -65,7 +59,7 @@ function createCountdownBar(daysLeft, totalWindow = 90) {
         <div style="height:6px;width:${pct}%;background:#0078ff;"></div>
       </div>
       <div style="font-size:11px;color:#666;margin-top:2px;">
-        ${daysLeft} days until next ping
+        ${daysLeft} days until expiration
       </div>
     </div>
   `;
@@ -87,18 +81,18 @@ async function loadRandomEpisode() {
       <section class="audio-card random-card">
         <h2>🎧 Random Episode</h2>
         <h3>${random.title}</h3>
-        <p><strong>Published:</strong> ${random.published}</p>
+        <p><strong>Published:</strong> ${random.published || "—"}</p>
 
         <audio id="randomAudio" controls src="${random.mp3}" data-id="${random.id}"></audio>
 
         <p><strong>Plays:</strong> ${state.count || 0}</p>
-        <p><strong>Last Played Day:</strong> ${state.lastPlayed || "—"}</p>
-        ${isToday(state.lastPlayed) ? `<p style="font-size:12px;color:#0078ff;">Daily bump applied today ✅</p>` : ""}
+        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"}</p>
       </section>
     `;
 
     const player = document.getElementById("randomAudio");
 
+    // Count a play once per load after 1 second of listening
     player.addEventListener("timeupdate", async () => {
       if (player.currentTime > 1 && !player._counted) {
         player._counted = true;
@@ -145,10 +139,9 @@ async function loadUI() {
       dashCard.innerHTML = `
         <h3>${audio.title}</h3>
         <p><strong>Plays:</strong> ${state.count || 0}</p>
-        <p><strong>Next Ping:</strong> ${state.nextPing || "—"} (${daysLeft} days left)</p>
-        <p><strong>Last Played Day:</strong> ${state.lastPlayed || "—"} (${daysSince === "—" ? "—" : daysSince + " days ago"})</p>
+        <p><strong>Expires:</strong> ${state.nextPing || "—"} (${daysLeft} days left)</p>
+        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"} (${daysSince === "—" ? "—" : daysSince + " days ago"})</p>
         ${createCountdownBar(daysLeft)}
-        ${isToday(state.lastPlayed) ? `<p style="font-size:12px;color:#0078ff;margin-top:4px;">Daily bump applied today ✅</p>` : ""}
         <span class="status ${status}">${status.toUpperCase()}</span>
         <button class="reset-btn" data-id="${audio.id}">
           Reset Count

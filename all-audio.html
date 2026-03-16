@@ -104,8 +104,8 @@
         <th>Title</th>
         <th>Note</th>
         <th>MP3</th>
-        <th>Last Played Day</th>
-        <th>Days</th>
+        <th>Last Played</th>
+        <th>Days Since</th>
         <th>Status</th>
         <th>Action</th>
       </tr>
@@ -160,9 +160,8 @@
           <td>
             <div>${audio.title}</div>
             <div style="font-size:11px;color:#666;margin-top:4px;">
-              ${state.nextPing ? `Next ping in ${daysLeft} days` : "No next ping set"}
+              ${state.nextPing ? `Expires in ${daysLeft} days` : "No expiration set"}
             </div>
-            ${isToday(state.lastPlayed) ? `<div style="font-size:11px;color:#0078ff;margin-top:2px;">Daily bump applied today ✅</div>` : ""}
           </td>
           <td style="color:#666;">${audio.note || ""}</td>
           <td style="color:#0078ff; word-break:break-all;">${audio.mp3}</td>
