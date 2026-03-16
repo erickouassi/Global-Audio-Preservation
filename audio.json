@@ -1,14 +1,14 @@
 [
   {
     "id": 1,
-    "title": "Day 1 Reading",
-    "mp3": "https://example.com/audio/day1.mp3",
+    "title": "Day 1 Reading -Test",
+    "mp3": "https://audio.jukehost.co.uk/DlqiR2ur9YDXxy8t1BcgSk2f9VSjJSrE",
     "published": "2024-12-01"
   },
   {
     "id": 2,
-    "title": "Day 2 Reading",
-    "mp3": "https://example.com/audio/day2.mp3",
+    "title": "Day 2 Reading -Test",
+    "mp3": "https://audio.jukehost.co.uk/OOtlz01VjbQo39nEY49OHnoUdjfUCLuR",
     "published": "2024-12-02"
   }
 ]
