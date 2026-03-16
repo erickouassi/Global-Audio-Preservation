@@ -14,13 +14,11 @@
       color: #333;
       line-height: 1.6;
     }
-
     h1 {
       font-size: 26px;
       font-weight: 700;
       margin-bottom: 10px;
     }
-
     .home-link {
       display: inline-block;
       margin-bottom: 20px;
@@ -31,7 +29,6 @@
       text-decoration: none;
       font-size: 13px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -41,18 +38,16 @@
       font-size: 14px;
       margin-top: 20px;
     }
-
     th, td {
       padding: 12px;
       text-align: left;
       border-bottom: 1px solid #eee;
+      vertical-align: top;
     }
-
     th {
       background: #eaeaea;
       font-weight: 600;
     }
-
     .status-badge {
       padding: 4px 8px;
       border-radius: 6px;
@@ -60,17 +55,22 @@
       font-size: 12px;
       display: inline-block;
     }
-
-    .reset-btn {
+    .btn {
       padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-ping {
+      background: #0078ff;
+      color: white;
+    }
+    .btn-reset {
       background: #c62828;
       color: white;
-      border: none;
-      border-radius: 6px;
       margin-left: 6px;
-      cursor: pointer;
     }
-
     footer {
       margin-top: 40px;
       padding-top: 20px;
@@ -79,12 +79,10 @@
       font-size: 14px;
       color: #666;
     }
-
     footer a {
       color: #0078ff;
       text-decoration: none;
     }
-
     @media (max-width: 600px) {
       td:nth-child(2), th:nth-child(2),
       td:nth-child(3), th:nth-child(3),
@@ -106,7 +104,7 @@
         <th>Title</th>
         <th>Note</th>
         <th>MP3</th>
-        <th>Last Ping</th>
+        <th>Last Played Day</th>
         <th>Days</th>
         <th>Status</th>
         <th>Action</th>
@@ -152,11 +150,20 @@
           : "Never";
 
         const urgency = getStatus(state.nextPing);
+        const daysLeft = state.nextPing
+          ? Math.floor((new Date(state.nextPing) - today) / (1000 * 60 * 60 * 24))
+          : 0;
 
         const row = document.createElement("tr");
 
         row.innerHTML = `
-          <td>${audio.title}</td>
+          <td>
+            <div>${audio.title}</div>
+            <div style="font-size:11px;color:#666;margin-top:4px;">
+              ${state.nextPing ? `Next ping in ${daysLeft} days` : "No next ping set"}
+            </div>
+            ${isToday(state.lastPlayed) ? `<div style="font-size:11px;color:#0078ff;margin-top:2px;">Daily bump applied today ✅</div>` : ""}
+          </td>
           <td style="color:#666;">${audio.note || ""}</td>
           <td style="color:#0078ff; word-break:break-all;">${audio.mp3}</td>
           <td>${state.lastPlayed || "Never"}</td>
@@ -167,63 +174,73 @@
             </span>
           </td>
           <td>
-            <button class="btn ping-btn" style="padding:6px 10px;">Ping Now</button>
-            <button class="reset-btn">Reset</button>
+            <button class="btn btn-ping">Ping Now</button>
+            <button class="btn btn-reset">Reset</button>
           </td>
         `;
 
-        row.querySelector(".ping-btn").onclick = async () => {
-          await registerPlay(audio.id);
-          const newState = await getState(audio.id);
+        const pingBtn = row.querySelector(".btn-ping");
+        const resetBtn = row.querySelector(".btn-reset");
 
-          row.cells[3].textContent = newState.lastPlayed || "Never";
+        pingBtn.onclick = async () => {
+          try {
+            await registerPlay(audio.id);
+            const newState = await getState(audio.id);
 
-          const last = newState.lastPlayed ? new Date(newState.lastPlayed) : null;
-          const diff = last
-            ? Math.floor((today - last) / (1000 * 60 * 60 * 24))
-            : "Never";
+            row.cells[3].textContent = newState.lastPlayed || "Never";
 
-          row.cells[4].textContent = diff;
+            const last = newState.lastPlayed ? new Date(newState.lastPlayed) : null;
+            const diff = last
+              ? Math.floor((today - last) / (1000 * 60 * 60 * 24))
+              : "Never";
 
-          const urgency = getStatus(newState.nextPing);
-          const badge = row.cells[5].querySelector(".status-badge");
-          badge.textContent = urgency.toUpperCase();
-          badge.style.background = urgencyColor(urgency);
+            row.cells[4].textContent = diff;
+
+            const urgency = getStatus(newState.nextPing);
+            const badge = row.cells[5].querySelector(".status-badge");
+            badge.textContent = urgency.toUpperCase();
+            badge.style.background = urgencyColor(urgency);
+          } catch (e) {
+            console.error("Ping failed:", e);
+          }
         };
 
-        row.querySelector(".reset-btn").onclick = async () => {
+        resetBtn.onclick = async () => {
           const confirmReset = confirm(`Reset play count for "${audio.title}"?`);
           if (!confirmReset) return;
 
-          await resetCount(audio.id);
-          const newState = await getState(audio.id);
+          try {
+            await resetCount(audio.id);
+            const newState = await getState(audio.id);
 
-          row.cells[3].textContent = newState.lastPlayed || "Never";
-          row.cells[4].textContent = "0";
+            row.cells[3].textContent = newState.lastPlayed || "Never";
+            row.cells[4].textContent = "0";
 
-          const urgency = getStatus(newState.nextPing);
-          const badge = row.cells[5].querySelector(".status-badge");
-          badge.textContent = urgency.toUpperCase();
-          badge.style.background = urgencyColor(urgency);
+            const urgency = getStatus(newState.nextPing);
+            const badge = row.cells[5].querySelector(".status-badge");
+            badge.textContent = urgency.toUpperCase();
+            badge.style.background = urgencyColor(urgency);
+          } catch (e) {
+            console.error("Reset failed:", e);
+          }
         };
 
         tbody.appendChild(row);
       });
     }
 
-    async function init() {
+    async function initAllAudio() {
       const audios = await fetchJson("audio.json");
-
       const states = {};
       for (const audio of audios) {
         states[audio.id] = await getState(audio.id);
       }
-
       renderTable(audios, states);
-      document.getElementById("year").textContent = new Date().getFullYear();
+      const yearEl = document.getElementById("year");
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
     }
 
-    init();
+    document.addEventListener("DOMContentLoaded", initAllAudio);
   </script>
 
 </body>

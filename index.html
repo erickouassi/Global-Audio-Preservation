@@ -14,17 +14,17 @@
       color: #333;
       line-height: 1.6;
     }
-
     h1 {
       font-size: 28px;
       font-weight: 700;
       margin-bottom: 10px;
     }
-
-    .nav-links {
-      margin-bottom: 20px;
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
     }
-
     .nav-links a {
       display: inline-block;
       margin-right: 10px;
@@ -35,7 +35,20 @@
       text-decoration: none;
       font-size: 13px;
     }
-
+    .nav-links a:last-child {
+      margin-right: 0;
+    }
+    .admin-actions button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .admin-danger {
+      background: #c62828;
+      color: white;
+    }
     .audio-card, .dash-card {
       background: white;
       padding: 16px;
@@ -43,23 +56,21 @@
       margin-bottom: 16px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
-
     .random-card {
       border-left: 4px solid #0078ff;
       background: #eef6ff;
     }
-
     .status {
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 12px;
       color: white;
+      display: inline-block;
+      margin-top: 6px;
     }
-
     .healthy { background: #4caf50; }
     .warning { background: #ff9800; }
     .critical { background: #f44336; }
-
     .reset-btn {
       margin-top: 10px;
       background: #c62828;
@@ -68,8 +79,8 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 12px;
     }
-
     footer {
       margin-top: 40px;
       padding-top: 20px;
@@ -78,7 +89,6 @@
       font-size: 14px;
       color: #666;
     }
-
     footer a {
       color: #0078ff;
       text-decoration: none;
@@ -87,12 +97,23 @@
 </head>
 <body>
 
-  <h1>PingHost – Audio Preservation</h1>
+  <div class="nav-bar">
+    <div>
+      <h1>PingHost – Audio Preservation</h1>
+      <div style="font-size:13px;color:#666;">90‑day preservation window with daily bump logic.</div>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="all-audio.html">All Audio</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </div>
 
-  <div class="nav-links">
-    <a href="all-audio.html">All Audio Files</a>
-    <a href="about.html">About</a>
-    <a href="privacy.html">Privacy</a>
+  <div class="admin-actions" style="margin-bottom:16px;">
+    <button id="resetAllBtn" class="admin-danger">
+      Reset All Counts
+    </button>
   </div>
 
   <!-- Random Episode Player -->
@@ -113,10 +134,5 @@
   </footer>
 
   <script src="script.js"></script>
-
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-
 </body>
 </html>
