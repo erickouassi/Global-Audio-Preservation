@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   const lastPlayedKey = `audio_lastPlayed_${id}`;
 
   if (req.method === "GET") {
-    const count = (await redisGet(countKey)) || 0;
+    const count = parseInt(await redisGet(countKey) || "0", 10);
     const nextPing = await redisGet(nextPingKey);
     const lastPlayed = await redisGet(lastPlayedKey);
 
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const current = (await redisGet(countKey)) || 0;
+    const current = parseInt(await redisGet(countKey) || "0", 10);
     const newCount = current + 1;
 
     await redisSet(countKey, newCount);
