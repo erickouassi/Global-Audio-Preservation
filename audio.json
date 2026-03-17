@@ -1,14 +1,129 @@
 [
   {
     "id": 1,
-    "title": "Day 1 Reading -Test",
-    "mp3": "https://audio.jukehost.co.uk/DlqiR2ur9YDXxy8t1BcgSk2f9VSjJSrE",
-    "published": "2024-12-01"
+    "title": "Day 1 – Setting Your Heart to Seek God",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/OOtlz01VjbQo39nEY49OHnoUdjfUCLuR.mp3",
+    "published": "2026-01-05"
   },
   {
     "id": 2,
-    "title": "Day 2 Reading -Test",
-    "mp3": "https://audio.jukehost.co.uk/OOtlz01VjbQo39nEY49OHnoUdjfUCLuR",
-    "published": "2024-12-02"
+    "title": "Day 2 – Choosing Simplicity Again",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/j9JYYX5q1KD67jw4MjaPFsK7yOtClT1B.mp3",
+    "published": "2026-01-06"
+  },
+  {
+    "id": 3,
+    "title": "Day 3 – Making Space for God",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/hECwZsqU1CmvgQoJzx364LhlXtv3FneY.mp3",
+    "published": "2026-01-07"
+  },
+  {
+    "id": 4,
+    "title": "Day 4 – The Slow Work of Grace",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/OU3qGfdSPFXhuqB74lbXjYrfgjewUS56.mp3",
+    "published": "2026-01-08"
+  },
+  {
+    "id": 5,
+    "title": "Day 5 – When Desire Feels Small",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/DVmeduHCb3x9VEtwpQVIjtZpkoHlmtUo.mp3",
+    "published": "2026-01-09"
+  },
+  {
+    "id": 6,
+    "title": "Day 6 – Staying Faithful in the Ordinary",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/JfzVmH3UJ7oXlLCGMQzDdKa04Ylr0h3Z.mp3",
+    "published": "2026-01-10"
+  },
+  {
+    "id": 7,
+    "title": "Day 7 – Resting in God’s Presence",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/GNLPKqjqyfr2ARAx0kOgPRfuWMucHvvf.mp3",
+    "published": "2026-01-11"
+  },
+  {
+    "id": 8,
+    "title": "Day 8 – Naming What Distracts You",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/lSO0hhDrenLMFdzvAXNj64PwAUngzHoc.mp3",
+    "published": "2026-01-12"
+  },
+  {
+    "id": 9,
+    "title": "Day 9 – Letting Go of False Strength",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/yH9yenHizTNi7HzNPuRPCQqqk4c2uwFt.mp3",
+    "published": "2026-01-13"
+  },
+  {
+    "id": 10,
+    "title": "Day 10 – The Gift of Spiritual Hunger",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/orJC4LBh1cAWv65Kl3zZsQvOx4in9Fwa.mp3",
+    "published": "2026-01-14"
+  },
+  {
+    "id": 11,
+    "title": "Day 11 – When Prayer Feels Dry",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/kZ95G5m9YEzQHgzdot110pj437u31EOT.mp3",
+    "published": "2026-01-15"
+  },
+  {
+    "id": 12,
+    "title": "Day 12 – Purifying Intentions",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/lxN7CxVirx0aosPMn2viZl2YWdZSTvk8.mp3",
+    "published": "2026-01-16"
+  },
+  {
+    "id": 13,
+    "title": "Day 13 – The Quiet Conversion",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/AeMULtkM8fw7oVe7cxRRYWV57QikHUs9.mp3",
+    "published": "2026-01-17"
+  },
+  {
+    "id": 14,
+    "title": "Day 14 – Strength in Surrender",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/d35H0Z98LtfBDWXRPdvyHEDxwbA8NMoS.mp3",
+    "published": "2026-01-18"
+  },
+  {
+    "id": 15,
+    "title": "Day 15 – God Has Heard You",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/mCNsieW0wMLQXmEb4wFkErJsekG9RBXU.mp3",
+    "published": "2026-01-19"
+  },
+  {
+    "id": 16,
+    "title": "Day 16 – Do Not Be Afraid",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/fGZgw4dHJyWjKIDTnPd5sOUNgbgC976e.mp3",
+    "published": "2026-01-20"
+  },
+  {
+    "id": 17,
+    "title": "Day 17 – You Are Precious to God",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/4ry0IK1LKoI3AWsfpIzccvilhHyzz1Hb.mp3",
+    "published": "2026-01-21"
+  },
+  {
+    "id": 18,
+    "title": "Day 18 – Strength for the Battle",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/f5F3AAjpHtlSAahnLrmwts9joWSf8Baw.mp3",
+    "published": "2026-01-22"
+  },
+  {
+    "id": 19,
+    "title": "Day 19 – Understanding the Mission",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/zpehmBx5Ik4BxhCbmVsvUAAQA4sUXX7B.mp3",
+    "published": "2026-01-23"
+  },
+  {
+    "id": 20,
+    "title": "Day 20 – Standing Firm in Grace",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/mNgUxJKNm6P3nCe2iT8cgvd3Def5iIGz.mp3",
+    "published": "2026-01-24"
+  },
+  {
+    "id": 21,
+    "title": "Day 21 – Sent Forth in Peace",
+    "mp3": "https://op3.dev/e/audio.jukehost.co.uk/MQzUVW9tXpMZM8u0YNG0HHlyGOBYgAQR.mp3",
+    "published": "2026-01-25"
   }
 ]
+
