@@ -63,7 +63,100 @@ function createCountdownBar(daysLeft, totalWindow = 90) {
 }
 
 /* ============================================================
-   RANDOM EPISODE PLAYER (index.html)
+   ENHANCED PLAYER UI (Reusable)
+============================================================ */
+
+function createEnhancedPlayerHTML(audio, idPrefix) {
+  return `
+    <div class="player-ui" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+      <audio id="${idPrefix}-${audio.id}" src="${audio.mp3}"></audio>
+
+      <div style="display:flex;align-items:center;gap:12px;font-size:12px;">
+        <button class="play-btn"
+          style="background:#0078ff;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+          ▶ Play
+        </button>
+
+        <label>🔊 Vol
+          <input type="range" min="0" max="1" step="0.05" class="vol-slider">
+        </label>
+
+        <label>⏩ Speed
+          <select class="speed-select">
+            <option value="0.75">0.75x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+        </label>
+
+        <span class="now-playing-pill"
+          style="display:none;padding:2px 8px;border-radius:999px;background:#0078ff;color:white;">
+          NOW PLAYING
+        </span>
+
+        <span class="just-played" style="display:none;color:#0078ff;">
+          Last played just now
+        </span>
+      </div>
+
+      <div class="waveform" style="display:flex;gap:2px;height:16px;align-items:flex-end;">
+        ${Array.from({ length: 20 }).map(() =>
+          `<div class="bar" style="width:4px;background:#ccc;border-radius:2px;height:${4 + Math.random()*12}px;"></div>`
+        ).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function attachEnhancedPlayerLogic(container, audio, idPrefix) {
+  const audioEl = container.querySelector(`#${idPrefix}-${audio.id}`);
+  const playBtn = container.querySelector(".play-btn");
+  const volSlider = container.querySelector(".vol-slider");
+  const speedSelect = container.querySelector(".speed-select");
+  const nowPill = container.querySelector(".now-playing-pill");
+  const justPlayed = container.querySelector(".just-played");
+  const bars = Array.from(container.querySelectorAll(".waveform .bar"));
+
+  playBtn.onclick = () => audioEl.play();
+  volSlider.oninput = () => audioEl.volume = parseFloat(volSlider.value);
+  speedSelect.onchange = () => audioEl.playbackRate = parseFloat(speedSelect.value);
+
+  audioEl.addEventListener("play", () => {
+    nowPill.style.display = "inline-block";
+  });
+
+  audioEl.addEventListener("pause", () => {
+    nowPill.style.display = "none";
+  });
+
+  audioEl.addEventListener("timeupdate", async () => {
+    const t = audioEl.currentTime;
+
+    bars.forEach((bar, i) => {
+      const factor = Math.abs(Math.sin(t * 4 + i));
+      bar.style.height = `${4 + factor * 12}px`;
+      bar.style.background = "#0078ff";
+    });
+
+    if (t > 1 && !audioEl._counted) {
+      audioEl._counted = true;
+
+      await registerPlay(audio.id);
+
+      justPlayed.style.display = "inline";
+      setTimeout(() => justPlayed.style.display = "none", 3000);
+    }
+  });
+
+  audioEl.addEventListener("ended", () => {
+    nowPill.style.display = "none";
+  });
+}
+
+/* ============================================================
+   RANDOM EPISODE PLAYER (Enhanced)
 ============================================================ */
 
 async function loadRandomEpisode() {
@@ -73,7 +166,6 @@ async function loadRandomEpisode() {
   try {
     const audios = await fetchJson("audio.json");
     const random = audios[Math.floor(Math.random() * audios.length)];
-    const state = await getState(random.id);
 
     randomPlayerEl.innerHTML = `
       <section class="episode-card">
@@ -81,28 +173,19 @@ async function loadRandomEpisode() {
         <h3>${random.title}</h3>
         <p>${random.note || ""}</p>
 
-        <audio id="randomAudio" controls src="${random.mp3}" data-id="${random.id}"></audio>
-
-        <p><strong>Plays:</strong> ${state.count || 0}</p>
-        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"}</p>
+        ${createEnhancedPlayerHTML(random, "rand-audio")}
       </section>
     `;
 
-    const player = document.getElementById("randomAudio");
+    attachEnhancedPlayerLogic(randomPlayerEl, random, "rand-audio");
 
-    player.addEventListener("timeupdate", async () => {
-      if (player.currentTime > 1 && !player._counted) {
-        player._counted = true;
-        await registerPlay(random.id);
-      }
-    });
   } catch (err) {
     randomPlayerEl.innerHTML = "<p>Failed to load random episode.</p>";
   }
 }
 
 /* ============================================================
-   PLAYLIST (index.html)
+   PLAYLIST (Enhanced)
 ============================================================ */
 
 async function loadPlaylist() {
@@ -110,7 +193,6 @@ async function loadPlaylist() {
   if (!playlistEl) return;
 
   const audios = await fetchJson("audio.json");
-
   playlistEl.innerHTML = "";
 
   audios.forEach(audio => {
@@ -120,24 +202,16 @@ async function loadPlaylist() {
     card.innerHTML = `
       <h3>${audio.title}</h3>
       <p>${audio.note || ""}</p>
-      <audio controls src="${audio.mp3}" data-id="${audio.id}"></audio>
+      ${createEnhancedPlayerHTML(audio, "pl-audio")}
     `;
 
-    const player = card.querySelector("audio");
-
-    player.addEventListener("timeupdate", async () => {
-      if (player.currentTime > 1 && !player._counted) {
-        player._counted = true;
-        await registerPlay(audio.id);
-      }
-    });
-
+    attachEnhancedPlayerLogic(card, audio, "pl-audio");
     playlistEl.appendChild(card);
   });
 }
 
 /* ============================================================
-   DASHBOARD (dashboard.html)
+   DASHBOARD (Enhanced)
 ============================================================ */
 
 async function loadUI() {
@@ -177,113 +251,24 @@ async function loadUI() {
         <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
           <span class="status ${status}">${status.toUpperCase()}</span>
 
-          <button class="play-btn"
-            style="background:#0078ff;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
-            ▶ Play
-          </button>
-
           <button class="reset-btn"
             style="background:#c62828;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
             Reset
           </button>
         </div>
 
-        <div class="player-ui" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-          <audio id="dash-audio-${audio.id}" src="${audio.mp3}"></audio>
-
-          <div style="display:flex;align-items:center;gap:12px;font-size:12px;">
-            <label>🔊 Vol
-              <input type="range" min="0" max="1" step="0.05" class="vol-slider">
-            </label>
-
-            <label>⏩ Speed
-              <select class="speed-select">
-                <option value="0.75">0.75x</option>
-                <option value="1" selected>1x</option>
-                <option value="1.25">1.25x</option>
-                <option value="1.5">1.5x</option>
-                <option value="2">2x</option>
-              </select>
-            </label>
-
-            <span class="now-playing-pill"
-              style="display:none;padding:2px 8px;border-radius:999px;background:#0078ff;color:white;">
-              NOW PLAYING
-            </span>
-
-            <span class="just-played" style="display:none;color:#0078ff;">
-              Last played just now
-            </span>
-          </div>
-
-          <div class="waveform" style="display:flex;gap:2px;height:16px;align-items:flex-end;">
-            ${Array.from({ length: 20 }).map(() =>
-              `<div class="bar" style="width:4px;background:#ccc;border-radius:2px;height:${4 + Math.random()*12}px;"></div>`
-            ).join("")}
-          </div>
-        </div>
+        ${createEnhancedPlayerHTML(audio, "dash-audio")}
       `;
 
-      /* ------------------------------
-         DASHBOARD INTERACTIONS
-      ------------------------------ */
+      attachEnhancedPlayerLogic(dashCard, audio, "dash-audio");
 
-      const playBtn = dashCard.querySelector(".play-btn");
       const resetBtn = dashCard.querySelector(".reset-btn");
-      const audioEl = dashCard.querySelector(`#dash-audio-${audio.id}`);
-      const volSlider = dashCard.querySelector(".vol-slider");
-      const speedSelect = dashCard.querySelector(".speed-select");
-      const nowPill = dashCard.querySelector(".now-playing-pill");
-      const justPlayed = dashCard.querySelector(".just-played");
-      const bars = Array.from(dashCard.querySelectorAll(".waveform .bar"));
-
-      playBtn.onclick = () => audioEl.play();
-
       resetBtn.onclick = async () => {
         const confirmReset = confirm(`Reset play count for "${audio.title}"?`);
         if (!confirmReset) return;
         await resetCount(audio.id);
         await loadUI();
       };
-
-      volSlider.oninput = () => {
-        audioEl.volume = parseFloat(volSlider.value);
-      };
-
-      speedSelect.onchange = () => {
-        audioEl.playbackRate = parseFloat(speedSelect.value);
-      };
-
-      audioEl.addEventListener("play", () => {
-        nowPill.style.display = "inline-block";
-      });
-
-      audioEl.addEventListener("pause", () => {
-        nowPill.style.display = "none";
-      });
-
-      audioEl.addEventListener("timeupdate", async () => {
-        const t = audioEl.currentTime;
-
-        bars.forEach((bar, i) => {
-          const factor = Math.abs(Math.sin(t * 4 + i));
-          bar.style.height = `${4 + factor * 12}px`;
-          bar.style.background = "#0078ff";
-        });
-
-        if (t > 1 && !audioEl._counted) {
-          audioEl._counted = true;
-
-          await registerPlay(audio.id);
-
-          justPlayed.style.display = "inline";
-          setTimeout(() => justPlayed.style.display = "none", 3000);
-        }
-      });
-
-      audioEl.addEventListener("ended", async () => {
-        await loadUI();
-      });
 
       dashboardEl.appendChild(dashCard);
     }
