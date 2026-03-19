@@ -62,6 +62,13 @@ function createCountdownBar(daysLeft, totalWindow = 90) {
   `;
 }
 
+function formatTime(seconds) {
+  if (!isFinite(seconds) || seconds < 0) seconds = 0;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
 /* ============================================================
    ENHANCED PLAYER UI (Reusable)
 ============================================================ */
@@ -71,10 +78,16 @@ function createEnhancedPlayerHTML(audio, idPrefix) {
     <div class="player-ui" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
       <audio id="${idPrefix}-${audio.id}" src="${audio.mp3}"></audio>
 
-      <div style="display:flex;align-items:center;gap:12px;font-size:12px;">
+      <!-- Row 1: Controls -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:12px;">
         <button class="play-btn"
           style="background:#0078ff;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
           ▶ Play
+        </button>
+
+        <button class="mute-btn"
+          style="background:#555;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+          🔇 Mute
         </button>
 
         <label>🔊 Vol
@@ -101,6 +114,17 @@ function createEnhancedPlayerHTML(audio, idPrefix) {
         </span>
       </div>
 
+      <!-- Row 2: Progress + Time -->
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <input type="range" min="0" max="100" value="0" class="progress-slider"
+          style="width:100%;cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#555;">
+          <span class="current-time">00:00</span>
+          <span class="duration">00:00</span>
+        </div>
+      </div>
+
+      <!-- Row 3: Waveform -->
       <div class="waveform" style="display:flex;gap:2px;height:16px;align-items:flex-end;">
         ${Array.from({ length: 20 }).map(() =>
           `<div class="bar" style="width:4px;background:#ccc;border-radius:2px;height:${4 + Math.random()*12}px;"></div>`
@@ -110,36 +134,98 @@ function createEnhancedPlayerHTML(audio, idPrefix) {
   `;
 }
 
+/**
+ * Attaches logic to a player container.
+ * Returns the audio element so callers (like dashboard) can add extra listeners.
+ */
 function attachEnhancedPlayerLogic(container, audio, idPrefix) {
   const audioEl = container.querySelector(`#${idPrefix}-${audio.id}`);
   const playBtn = container.querySelector(".play-btn");
+  const muteBtn = container.querySelector(".mute-btn");
   const volSlider = container.querySelector(".vol-slider");
   const speedSelect = container.querySelector(".speed-select");
   const nowPill = container.querySelector(".now-playing-pill");
   const justPlayed = container.querySelector(".just-played");
   const bars = Array.from(container.querySelectorAll(".waveform .bar"));
+  const progressSlider = container.querySelector(".progress-slider");
+  const currentTimeEl = container.querySelector(".current-time");
+  const durationEl = container.querySelector(".duration");
 
-  playBtn.onclick = () => audioEl.play();
-  volSlider.oninput = () => audioEl.volume = parseFloat(volSlider.value);
-  speedSelect.onchange = () => audioEl.playbackRate = parseFloat(speedSelect.value);
+  // Initial defaults
+  audioEl.volume = 1;
+  volSlider.value = "1";
+  audioEl.playbackRate = 1;
+  speedSelect.value = "1";
+
+  /* Play / Pause toggle */
+  playBtn.onclick = () => {
+    if (audioEl.paused) {
+      audioEl.play();
+    } else {
+      audioEl.pause();
+    }
+  };
 
   audioEl.addEventListener("play", () => {
+    playBtn.textContent = "⏸ Pause";
     nowPill.style.display = "inline-block";
   });
 
   audioEl.addEventListener("pause", () => {
+    playBtn.textContent = "▶ Play";
     nowPill.style.display = "none";
   });
 
+  /* Mute toggle */
+  muteBtn.onclick = () => {
+    audioEl.muted = !audioEl.muted;
+    muteBtn.textContent = audioEl.muted ? "🔊 Unmute" : "🔇 Mute";
+  };
+
+  /* Volume */
+  volSlider.oninput = () => {
+    audioEl.volume = parseFloat(volSlider.value);
+    if (audioEl.volume === 0) {
+      audioEl.muted = true;
+      muteBtn.textContent = "🔊 Unmute";
+    } else {
+      audioEl.muted = false;
+      muteBtn.textContent = "🔇 Mute";
+    }
+  };
+
+  /* Speed */
+  speedSelect.onchange = () => {
+    audioEl.playbackRate = parseFloat(speedSelect.value);
+  };
+
+  /* Duration (once metadata is loaded) */
+  audioEl.addEventListener("loadedmetadata", () => {
+    durationEl.textContent = formatTime(audioEl.duration);
+  });
+
+  /* Timeupdate: waveform, progress, current time, play count */
   audioEl.addEventListener("timeupdate", async () => {
     const t = audioEl.currentTime;
+    const d = audioEl.duration || 0;
 
+    // Waveform animation
     bars.forEach((bar, i) => {
       const factor = Math.abs(Math.sin(t * 4 + i));
       bar.style.height = `${4 + factor * 12}px`;
       bar.style.background = "#0078ff";
     });
 
+    // Time display
+    currentTimeEl.textContent = formatTime(t);
+
+    // Progress slider (0–100)
+    if (d > 0 && !progressSlider._dragging) {
+      const pct = (t / d) * 100;
+      progressSlider.value = pct;
+    }
+
+    // Count play once after 1 second
     if (t > 1 && !audioEl._counted) {
       audioEl._counted = true;
 
@@ -150,9 +236,30 @@ function attachEnhancedPlayerLogic(container, audio, idPrefix) {
     }
   });
 
-  audioEl.addEventListener("ended", () => {
-    nowPill.style.display = "none";
+  /* Seek support */
+  progressSlider.addEventListener("input", () => {
+    // Mark as dragging so timeupdate doesn't fight the slider
+    progressSlider._dragging = true;
   });
+
+  progressSlider.addEventListener("change", () => {
+    const d = audioEl.duration || 0;
+    const pct = parseFloat(progressSlider.value);
+    if (d > 0) {
+      audioEl.currentTime = (pct / 100) * d;
+    }
+    progressSlider._dragging = false;
+  });
+
+  /* Ended */
+  audioEl.addEventListener("ended", () => {
+    playBtn.textContent = "▶ Play";
+    nowPill.style.display = "none";
+    currentTimeEl.textContent = "00:00";
+    progressSlider.value = 0;
+  });
+
+  return audioEl;
 }
 
 /* ============================================================
@@ -260,7 +367,7 @@ async function loadUI() {
         ${createEnhancedPlayerHTML(audio, "dash-audio")}
       `;
 
-      attachEnhancedPlayerLogic(dashCard, audio, "dash-audio");
+      const audioEl = attachEnhancedPlayerLogic(dashCard, audio, "dash-audio");
 
       const resetBtn = dashCard.querySelector(".reset-btn");
       resetBtn.onclick = async () => {
@@ -269,6 +376,11 @@ async function loadUI() {
         await resetCount(audio.id);
         await loadUI();
       };
+
+      // Refresh dashboard AFTER playback ends (no auto-stop mid-play)
+      audioEl.addEventListener("ended", async () => {
+        await loadUI();
+      });
 
       dashboardEl.appendChild(dashCard);
     }
