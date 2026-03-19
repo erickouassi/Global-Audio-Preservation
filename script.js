@@ -165,9 +165,6 @@ async function loadUI() {
       const dashCard = document.createElement("section");
       dashCard.className = "dash-card";
 
-      /* ------------------------------
-         DASHBOARD CARD HTML
-      ------------------------------ */
       dashCard.innerHTML = `
         <h3>${audio.title}</h3>
 
@@ -267,22 +264,25 @@ async function loadUI() {
 
       audioEl.addEventListener("timeupdate", async () => {
         const t = audioEl.currentTime;
+
         bars.forEach((bar, i) => {
           const factor = Math.abs(Math.sin(t * 4 + i));
           bar.style.height = `${4 + factor * 12}px`;
           bar.style.background = "#0078ff";
         });
 
-        if (audioEl.currentTime > 1 && !audioEl._counted) {
+        if (t > 1 && !audioEl._counted) {
           audioEl._counted = true;
 
           await registerPlay(audio.id);
 
           justPlayed.style.display = "inline";
           setTimeout(() => justPlayed.style.display = "none", 3000);
-
-          await loadUI();
         }
+      });
+
+      audioEl.addEventListener("ended", async () => {
+        await loadUI();
       });
 
       dashboardEl.appendChild(dashCard);
