@@ -1,9 +1,6 @@
-const dashboardEl = document.getElementById("dashboard");
-const randomPlayerEl = document.getElementById("randomPlayer");
-
-/* ------------------------------
-   Core helpers
------------------------------- */
+/* ============================================================
+   CORE HELPERS
+============================================================ */
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -65,11 +62,12 @@ function createCountdownBar(daysLeft, totalWindow = 90) {
   `;
 }
 
-/* ------------------------------
-   Random Episode Player
------------------------------- */
+/* ============================================================
+   RANDOM EPISODE PLAYER (index.html)
+============================================================ */
 
 async function loadRandomEpisode() {
+  const randomPlayerEl = document.getElementById("randomPlayer");
   if (!randomPlayerEl) return;
 
   try {
@@ -78,10 +76,10 @@ async function loadRandomEpisode() {
     const state = await getState(random.id);
 
     randomPlayerEl.innerHTML = `
-      <section class="audio-card random-card">
+      <section class="episode-card">
         <h2>🎧 Random Episode</h2>
         <h3>${random.title}</h3>
-        <p><strong>Published:</strong> ${random.published || "—"}</p>
+        <p>${random.note || ""}</p>
 
         <audio id="randomAudio" controls src="${random.mp3}" data-id="${random.id}"></audio>
 
@@ -92,84 +90,20 @@ async function loadRandomEpisode() {
 
     const player = document.getElementById("randomAudio");
 
-    // Count a play once per load after 1 second of listening
     player.addEventListener("timeupdate", async () => {
       if (player.currentTime > 1 && !player._counted) {
         player._counted = true;
-        try {
-          await registerPlay(random.id);
-        } catch (e) {
-          console.error("Failed to register play:", e);
-        }
+        await registerPlay(random.id);
       }
     });
   } catch (err) {
-    console.error("Random episode failed:", err);
     randomPlayerEl.innerHTML = "<p>Failed to load random episode.</p>";
   }
 }
 
-/* ------------------------------
-   Dashboard
------------------------------- */
-
-async function loadUI() {
-  if (!dashboardEl) return;
-
-  try {
-    const audios = await fetchJson("audio.json");
-    dashboardEl.innerHTML = "";
-
-    const today = new Date();
-
-    for (const audio of audios) {
-      const state = await getState(audio.id);
-
-      const status = getStatus(state.nextPing);
-      const daysLeft = state.nextPing
-        ? daysBetween(today, new Date(state.nextPing))
-        : 0;
-
-      const daysSince = state.lastPlayed
-        ? daysBetween(new Date(state.lastPlayed), today)
-        : "—";
-
-      const dashCard = document.createElement("section");
-      dashCard.className = "dash-card";
-      dashCard.innerHTML = `
-        <h3>${audio.title}</h3>
-        <p><strong>Plays:</strong> ${state.count || 0}</p>
-        <p><strong>Expires:</strong> ${state.nextPing || "—"} (${daysLeft} days left)</p>
-        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"} (${daysSince === "—" ? "—" : daysSince + " days ago"})</p>
-        ${createCountdownBar(daysLeft)}
-        <span class="status ${status}">${status.toUpperCase()}</span>
-        <button class="reset-btn" data-id="${audio.id}">
-          Reset Count
-        </button>
-      `;
-
-      const resetBtn = dashCard.querySelector(".reset-btn");
-      resetBtn.onclick = async () => {
-        const confirmReset = confirm(`Reset play count for "${audio.title}"? This cannot be undone.`);
-        if (!confirmReset) return;
-        try {
-          await resetCount(audio.id);
-          await loadUI();
-        } catch (e) {
-          console.error("Reset failed:", e);
-        }
-      };
-
-      dashboardEl.appendChild(dashCard);
-    }
-  } catch (err) {
-    console.error(err);
-    dashboardEl.innerHTML = "<p>Failed to load dashboard.</p>";
-  }
-}
-/* ------------------------------
-   Playlist Rendering
------------------------------- */
+/* ============================================================
+   PLAYLIST (index.html)
+============================================================ */
 
 async function loadPlaylist() {
   const playlistEl = document.getElementById("playlist");
@@ -202,11 +136,165 @@ async function loadPlaylist() {
   });
 }
 
+/* ============================================================
+   DASHBOARD (dashboard.html)
+============================================================ */
 
+async function loadUI() {
+  const dashboardEl = document.getElementById("dashboard");
+  if (!dashboardEl) return;
 
-/* ------------------------------
-   Global init
------------------------------- */
+  try {
+    const audios = await fetchJson("audio.json");
+    dashboardEl.innerHTML = "";
+
+    const today = new Date();
+
+    for (const audio of audios) {
+      const state = await getState(audio.id);
+
+      const status = getStatus(state.nextPing);
+      const daysLeft = state.nextPing
+        ? daysBetween(today, new Date(state.nextPing))
+        : 0;
+
+      const daysSince = state.lastPlayed
+        ? daysBetween(new Date(state.lastPlayed), today)
+        : "—";
+
+      const dashCard = document.createElement("section");
+      dashCard.className = "dash-card";
+
+      /* ------------------------------
+         DASHBOARD CARD HTML
+      ------------------------------ */
+      dashCard.innerHTML = `
+        <h3>${audio.title}</h3>
+
+        <p><strong>Plays:</strong> ${state.count || 0}</p>
+        <p><strong>Expires:</strong> ${state.nextPing || "—"} (${daysLeft} days left)</p>
+        <p><strong>Last Played:</strong> ${state.lastPlayed || "—"} (${daysSince === "—" ? "—" : daysSince + " days ago"})</p>
+
+        ${createCountdownBar(daysLeft)}
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+          <span class="status ${status}">${status.toUpperCase()}</span>
+
+          <button class="play-btn"
+            style="background:#0078ff;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+            ▶ Play
+          </button>
+
+          <button class="reset-btn"
+            style="background:#c62828;color:white;padding:6px 10px;border:none;border-radius:6px;cursor:pointer;font-size:12px;">
+            Reset
+          </button>
+        </div>
+
+        <div class="player-ui" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+          <audio id="dash-audio-${audio.id}" src="${audio.mp3}"></audio>
+
+          <div style="display:flex;align-items:center;gap:12px;font-size:12px;">
+            <label>🔊 Vol
+              <input type="range" min="0" max="1" step="0.05" class="vol-slider">
+            </label>
+
+            <label>⏩ Speed
+              <select class="speed-select">
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+              </select>
+            </label>
+
+            <span class="now-playing-pill"
+              style="display:none;padding:2px 8px;border-radius:999px;background:#0078ff;color:white;">
+              NOW PLAYING
+            </span>
+
+            <span class="just-played" style="display:none;color:#0078ff;">
+              Last played just now
+            </span>
+          </div>
+
+          <div class="waveform" style="display:flex;gap:2px;height:16px;align-items:flex-end;">
+            ${Array.from({ length: 20 }).map(() =>
+              `<div class="bar" style="width:4px;background:#ccc;border-radius:2px;height:${4 + Math.random()*12}px;"></div>`
+            ).join("")}
+          </div>
+        </div>
+      `;
+
+      /* ------------------------------
+         DASHBOARD INTERACTIONS
+      ------------------------------ */
+
+      const playBtn = dashCard.querySelector(".play-btn");
+      const resetBtn = dashCard.querySelector(".reset-btn");
+      const audioEl = dashCard.querySelector(`#dash-audio-${audio.id}`);
+      const volSlider = dashCard.querySelector(".vol-slider");
+      const speedSelect = dashCard.querySelector(".speed-select");
+      const nowPill = dashCard.querySelector(".now-playing-pill");
+      const justPlayed = dashCard.querySelector(".just-played");
+      const bars = Array.from(dashCard.querySelectorAll(".waveform .bar"));
+
+      playBtn.onclick = () => audioEl.play();
+
+      resetBtn.onclick = async () => {
+        const confirmReset = confirm(`Reset play count for "${audio.title}"?`);
+        if (!confirmReset) return;
+        await resetCount(audio.id);
+        await loadUI();
+      };
+
+      volSlider.oninput = () => {
+        audioEl.volume = parseFloat(volSlider.value);
+      };
+
+      speedSelect.onchange = () => {
+        audioEl.playbackRate = parseFloat(speedSelect.value);
+      };
+
+      audioEl.addEventListener("play", () => {
+        nowPill.style.display = "inline-block";
+      });
+
+      audioEl.addEventListener("pause", () => {
+        nowPill.style.display = "none";
+      });
+
+      audioEl.addEventListener("timeupdate", async () => {
+        const t = audioEl.currentTime;
+        bars.forEach((bar, i) => {
+          const factor = Math.abs(Math.sin(t * 4 + i));
+          bar.style.height = `${4 + factor * 12}px`;
+          bar.style.background = "#0078ff";
+        });
+
+        if (audioEl.currentTime > 1 && !audioEl._counted) {
+          audioEl._counted = true;
+
+          await registerPlay(audio.id);
+
+          justPlayed.style.display = "inline";
+          setTimeout(() => justPlayed.style.display = "none", 3000);
+
+          await loadUI();
+        }
+      });
+
+      dashboardEl.appendChild(dashCard);
+    }
+  } catch (err) {
+    dashboardEl.innerHTML = "<p>Failed to load dashboard.</p>";
+  }
+}
+
+/* ============================================================
+   GLOBAL INIT
+============================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
   const yearEl = document.getElementById("year");
@@ -215,14 +303,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const resetAllBtn = document.getElementById("resetAllBtn");
   if (resetAllBtn) {
     resetAllBtn.onclick = async () => {
-      const confirmReset = confirm("Reset play counts for ALL audios? This cannot be undone.");
+      const confirmReset = confirm("Reset ALL play counts?");
       if (!confirmReset) return;
-      try {
-        await resetAllCounts();
-        await loadUI();
-      } catch (e) {
-        console.error("Reset all failed:", e);
-      }
+      await resetAllCounts();
+      await loadUI();
     };
   }
 
