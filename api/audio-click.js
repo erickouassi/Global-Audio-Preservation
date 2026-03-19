@@ -27,7 +27,6 @@ export default async function handler(req, res) {
   const countKey = `audio_count_${id}`;
   const nextPingKey = `audio_nextPing_${id}`;
   const lastPlayedKey = `audio_lastPlayed_${id}`;
-  const publishedKey = `audio_published_${id}`; // optional if you want to store it
 
   if (req.method === "GET") {
     const count = parseInt((await redisGet(countKey)) || "0", 10);
@@ -37,12 +36,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    // 1) Increment play count
     const currentCount = parseInt((await redisGet(countKey)) || "0", 10);
     const newCount = currentCount + 1;
     await redisSet(countKey, newCount);
 
-    // 2) Reset nextPing to today + 90 days (hard cap)
     const now = new Date();
     const todayIso = now.toISOString();
     const nextPing = addDays(now, 90).toISOString();
